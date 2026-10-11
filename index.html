@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ja" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <title>チラシ配布カウンター - 片手特化型</title>
+  <meta name="description" content="iPhone Safariでの片手親指操作に特化したチラシ配布数カウントWebアプリケーション">
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans JP"', 'sans-serif'],
+            mono: ['"Chakra Petch"', 'monospace'],
+          },
+          colors: {
+            male: {
+              DEFAULT: '#38bdf8',
+              active: '#0284c7',
+              bg: '#082f49',
+              border: '#0369a1'
+            },
+            female: {
+              DEFAULT: '#f472b6',
+              active: '#db2777',
+              bg: '#500724',
+              border: '#be185d'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* iOS Safari最適化 & スタイル */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      height: 100dvh;
+      overflow: hidden;
+    }
+    .tap-btn {
+      transition: transform 0.08s ease, filter 0.08s ease, background-color 0.08s ease;
+      will-change: transform;
+    }
+    .tap-btn:active {
+      transform: scale(0.94);
+      filter: brightness(0.82);
+    }
+    .undo-btn:active {
+      transform: scale(0.96);
+      filter: brightness(0.85);
+    }
+    /* パルス光沢 */
+    @keyframes flash-green {
+      0% { background-color: rgba(34, 197, 94, 0.4); }
+      100% { background-color: transparent; }
+    }
+    .flash-updated {
+      animation: flash-green 0.35s ease-out;
+    }
+    /* スクロールバー非表示 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="flex flex-col h-full bg-slate-950 text-slate-100 select-none">
+
+  <!-- ヘッダーエリア (タイトル & サブアクション) -->
+  <header class="flex items-center justify-between px-3 py-2 bg-slate-900/90 border-b border-slate-800 shrink-0 backdrop-blur z-10">
+    <div class="flex items-center space-x-2">
+      <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+      <h1 class="text-sm font-bold tracking-wider text-slate-200">チラシ配布カウンター</h1>
+    </div>
+    <div class="flex items-center space-x-2">
+      <!-- CSV出力ボタン -->
+      <button id="btn-export-csv" class="tap-btn px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-emerald-50 text-xs font-bold flex items-center gap-1 shadow-md shadow-emerald-950/50 active:bg-emerald-700">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        <span>CSV共有</span>
+      </button>
+
+      <!-- リセットボタン (2段階確認) -->
+      <button id="btn-open-reset" class="tap-btn px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-800 text-xs font-semibold flex items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        <span>リセット</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 画面上部：リアルタイム集計表示エリア -->
+  <section class="flex flex-col px-3 py-2 bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800/80 shrink-0">
+    <div class="flex items-center justify-between mb-1.5">
+      <!-- 総配布枚数 -->
+      <div class="flex items-baseline space-x-2">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest">総配布枚数</span>
+        <div class="flex items-baseline">
+          <span id="total-count" class="font-mono text-3xl font-bold tracking-tight text-amber-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.3)]">0</span>
+          <span class="text-xs font-bold text-slate-400 ml-1">枚</span>
+        </div>
+      </div>
+      <!-- 直近アクション表示バッジ -->
+      <div id="last-action-badge" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800/90 text-slate-400 border border-slate-700/60 max-w-[160px] truncate">
+        待機中
+      </div>
+    </div>
+
+    <!-- 属性別集計ミニマトリクステーブル -->
+    <div class="bg-slate-900/90 rounded-lg p-1.5 border border-slate-800 shadow-inner">
+      <div class="grid grid-cols-5 text-center text-[10px] text-slate-400 font-bold pb-1 border-b border-slate-800">
+        <div class="text-left pl-1">年代</div>
+        <div class="text-sky-400">男性</div>
+        <div class="text-pink-400">女性</div>
+        <div class="text-slate-300">合計</div>
+        <div class="text-slate-400">比率</div>
+      </div>
+      <div class="divide-y divide-slate-800/50 text-[11px] font-mono">
+        <!-- 20代以下 -->
+        <div class="grid grid-cols-5 text-center py-0.5 items-center">
+          <div class="text-left pl-1 font-sans text-slate-300 text-[10px] font-medium">20代↓</div>
+          <div id="stat-m-20" class="text-sky-300 font-semibold">0</div>
+          <div id="stat-f-20" class="text-pink-300 font-semibold">0</div>
+          <div id="stat-sum-20" class="text-slate-200 font-bold">0</div>
+          <div id="stat-pct-20" class="text-[9px] text-slate-500">0%</div>
+        </div>
+        <!-- 30-40代 -->
+        <div class="grid grid-cols-5 text-center py-0.5 items-center">
+          <div class="text-left pl-1 font-sans text-slate-300 text-[10px] font-medium">30-40代</div>
+          <div id="stat-m-30" class="text-sky-300 font-semibold">0</div>
+          <div id="stat-f-30" class="text-pink-300 font-semibold">0</div>
+          <div id="stat-sum-30" class="text-slate-200 font-bold">0</div>
+          <div id="stat-pct-30" class="text-[9px] text-slate-500">0%</div>
+        </div>
+        <!-- 50代 -->
+        <div class="grid grid-cols-5 text-center py-0.5 items-center">
+          <div class="text-left pl-1 font-sans text-slate-300 text-[10px] font-medium">50代</div>
+          <div id="stat-m-50" class="text-sky-300 font-semibold">0</div>
+          <div id="stat-f-50" class="text-pink-300 font-semibold">0</div>
+          <div id="stat-sum-50" class="text-slate-200 font-bold">0</div>
+          <div id="stat-pct-50" class="text-[9px] text-slate-500">0%</div>
+        </div>
+        <!-- 60代以上 -->
+        <div class="grid grid-cols-5 text-center py-0.5 items-center">
+          <div class="text-left pl-1 font-sans text-slate-300 text-[10px] font-medium">60代↑</div>
+          <div id="stat-m-60" class="text-sky-300 font-semibold">0</div>
+          <div id="stat-f-60" class="text-pink-300 font-semibold">0</div>
+          <div id="stat-sum-60" class="text-slate-200 font-bold">0</div>
+          <div id="stat-pct-60" class="text-[9px] text-slate-500">0%</div>
+        </div>
+      </div>
+      <!-- 性別小計バー -->
+      <div class="grid grid-cols-5 text-center pt-1 border-t border-slate-800 text-[10px] font-bold">
+        <div class="text-left pl-1 text-slate-400">男女計</div>
+        <div id="stat-m-total" class="text-sky-400 font-mono">0</div>
+        <div id="stat-f-total" class="text-pink-400 font-mono">0</div>
+        <div id="stat-grand-total" class="text-amber-400 font-mono">0</div>
+        <div class="text-slate-500 font-mono">100%</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 画面下半分：親指操作特化マトリクスボタンエリア -->
+  <main class="flex-1 flex flex-col justify-end px-2.5 pt-2 pb-2 overflow-hidden">
+    <!-- 横2列（男性・女性）ラベルヘッダー -->
+    <div class="grid grid-cols-2 gap-2 mb-1.5 px-0.5 shrink-0">
+      <div class="flex items-center justify-center py-1 rounded-md bg-sky-950/70 border border-sky-800/60 text-sky-300 font-bold text-xs tracking-wider">
+        <span class="mr-1">♂</span> 男性
+      </div>
+      <div class="flex items-center justify-center py-1 rounded-md bg-pink-950/70 border border-pink-800/60 text-pink-300 font-bold text-xs tracking-wider">
+        <span class="mr-1">♀</span> 女性
+      </div>
+    </div>
+
+    <!-- 2列 × 4行 マトリクスボタン (計8ボタン) -->
+    <!-- 親指の可動域に合わせて下半分いっぱいに配置 -->
+    <div class="grid grid-cols-2 gap-2 flex-1 max-h-[58vh]">
+
+      <!-- 行1: 20代以下 -->
+      <button id="btn-count-m-20" data-gender="男性" data-age="20代以下"
+        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
+        <div class="flex items-center justify-between w-full">
+          <span class="text-xs font-semibold text-sky-400">男性</span>
+          <span id="badge-m-20" class="px-2 py-0.5 rounded-full bg-sky-950 text-sky-300 font-mono font-bold text-xs border border-sky-700/50">0</span>
+        </div>
+        <div class="my-auto py-0.5">
+          <div class="text-lg font-black text-white group-active:text-sky-200 tracking-tight leading-tight">20代以下</div>
+          <div class="text-[10px] text-sky-300/80">若年層・学生</div>
+        </div>
+        <div class="text-[9px] text-sky-400/60 text-right font-mono">TAP +1</div>
+      </button>
+
+      <button id="btn-count-f-20" data-gender="女性" data-age="20代以下"
+        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
+        <div class="flex items-center justify-between w-full">
+          <span class="text-xs font-semibold text-pink-400">女性</span>
+          <span id="badge-f-20" class="px-2 py-0.5 rounded-full bg-pink-950 text-pink-300 font-mono font-bold text-xs border border-pink-700/50">0</span>
+        </div>
+        <div class="my-auto py-0.5">
+          <div class="text-lg font-black text-white group-active:text-pink-200 tracking-tight leading-tight">20代以下</div>
+          <div class="text-[10px] text-pink-300/80">若年層・学生</div>
+        </div>
+        <div class="text-[9px] text-pink-400/60 text-right font-mono">TAP +1</div>
+      </button>
+
+      <!-- 行2: 30-40代 -->
+      <button id="btn-count-m-30" data-gender="男性" data-age="30-40代"
+        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
+        <div class="flex items-center justify-between w-full">
+          <span class="text-xs font-semibold text-sky-400">男性</span>
+          <span id="badge-m-30" class="px-2 py-0.5 rounded-full bg-sky-950 text-sky-300 font-mono font-bold text-xs border border-sky-700/50">0</span>
+        </div>
+        <div class="my-auto py-0.5">
+          <div class="text-lg font-black text-white group-active:text-sky-200 tracking-tight leading-tight">30-40代</div>
+          <div class="text-[10px] text-sky-300/80">働き盛り・子育て</div>
+        </div>
+        <div class="text-[9px] text-sky-400/60 text-right font-mono">TAP +1</div>
+      </button>
+
+      <button id="btn-count-f-30" data-gender="女性" data-age="30-40代"
+        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
+        <div class="flex items-center justify-between w-full">
+          <span class="text-xs font-semibold text-pink-400">女性</span>
+          <span id="badge-f-30" class="px-2 py-0.5 rounded-full bg-pink-950 text-pink-300 font-mono font-bold text-xs border border-pink-700/50">0</span>
+        </div>
+        <div class="my-auto py-0.5">
+          <div class="text-lg font-black text-white group-active:text-pink-200 tracking-tight leading-tight">30-40代</div>
+          <div class="text-[10px] text-pink-300/80">働き盛り・子育て</div>
+        </div>
+        <div class="text-[9px] text-pink-400/60 text-right font-mono">TAP +1</div>
+      </button>
+
+      <!-- 行3: 50代 -->
+      <button id="btn-count-m-50" data-gender="男性" data-age="50代"
+        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
+        <div class="flex items-center justify-between w-full">
+          <span class="text-xs font-semibold text-sky-400">男性</span>
+          <span id="badge-m-50" class="px-2 py-0.5 rounded-full bg-sky-950 text-sky-300 font-mono font-bold text-xs border border-sky-700/50">0</span>
+        </div>
+        <div class="my-auto py-0.5">
+          <div class="text-lg font-black text-white group-active:text-sky-200 tracking-tight leading-tight">50代</div>
+          <div class="text-[10px] text-sky-300/80">ミドルシニア</div>
+        </div>
+        <div class="text-[9px] text-sky-400/60 text-right font-mono">TAP +1</div>
+      </button>
+
+      <button id="btn-count-f-50" data-gender="女性" data-age="50代"
+        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
+        <div class="flex items-center justify-between w-full">
+          <span class="text-xs font-semibold text-pink-400">女性</span>
+          <span id="badge-f-50" class="px-2 py-0.5 rounded-full bg-pink-950 text-pink-300 font-mono font-bold text-xs border border-pink-700/50">0</span>
+        </div>
+        <div class="my-auto py-0.5">
+          <div class="text-lg font-black text-white group-active:text-pink-200 tracking-tight leading-tight">50代</div>
+          <div class="text-[10px] text-pink-300/80">ミドルシニア</div>
+        </div>
+        <div class="text-[9px] text-pink-400/60 text-right font-mono">TAP +1</div>
+      </button>
+
+      <!-- 行4: 60代以上 -->
+      <button id="btn-count-m-60" data-gender="男性" data-age="60代以上"
+        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
+        <div class="flex items-center justify-between w-full">
+          <span class="text-xs font-semibold text-sky-400">男性</span>
+          <span id="badge-m-60" class="px-2 py-0.5 rounded-full bg-sky-950 text-sky-300 font-mono font-bold text-xs border border-sky-700/50">0</span>
+        </div>
+        <div class="my-auto py-0.5">
+          <div class="text-lg font-black text-white group-active:text-sky-200 tracking-tight leading-tight">60代以上</div>
+          <div class="text-[10px] text-sky-300/80">シニア層</div>
+        </div>
+        <div class="text-[9px] text-sky-400/60 text-right font-mono">TAP +1</div>
+      </button>
+
+      <button id="btn-count-f-60" data-gender="女性" data-age="60代以上"
+        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
+        <div class="flex items-center justify-between w-full">
+          <span class="text-xs font-semibold text-pink-400">女性</span>
+          <span id="badge-f-60" class="px-2 py-0.5 rounded-full bg-pink-950 text-pink-300 font-mono font-bold text-xs border border-pink-700/50">0</span>
+        </div>
+        <div class="my-auto py-0.5">
+          <div class="text-lg font-black text-white group-active:text-pink-200 tracking-tight leading-tight">60代以上</div>
+          <div class="text-[10px] text-pink-300/80">シニア層</div>
+        </div>
+        <div class="text-[9px] text-pink-400/60 text-right font-mono">TAP +1</div>
+      </button>
+
+    </div>
+
+    <!-- 画面最下部：大きく目立つ「直前の入力を取り消す（アンドゥ）」ボタン -->
+    <div class="pt-2 shrink-0">
+      <button id="btn-undo" disabled
+        class="undo-btn w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-between bg-amber-500/20 text-amber-300 border-2 border-amber-500/40 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-lg shadow-amber-950/40 active:bg-amber-500/30">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/30 flex items-center justify-center text-amber-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a5 5 0 015 5v2m0 0l-4-4m4 4l4-4M3 10l4-4m-4 4l4 4" />
+            </svg>
+          </div>
+          <div class="text-left">
+            <div class="text-sm font-black tracking-wide text-amber-200">直前の入力を取り消す（アンドゥ）</div>
+            <div id="undo-subtext" class="text-[10px] text-amber-400/80 truncate max-w-[210px]">履歴がありません</div>
+          </div>
+        </div>
+        <span class="text-xs font-mono font-semibold px-2 py-1 bg-amber-900/50 rounded-md border border-amber-700/50 text-amber-300">UNDO</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- 2段階確認リセットモーダル -->
+  <div id="reset-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
+      <!-- モーダルヘッダー -->
+      <div class="p-4 bg-rose-950/40 border-b border-rose-900/50 flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-rose-200">データ初期化（リセット）</h2>
+          <p class="text-xs text-rose-400/80">誤操作防止 2段階確認</p>
+        </div>
+      </div>
+
+      <!-- ステップ1 表示 -->
+      <div id="reset-step-1" class="p-5 space-y-4">
+        <p class="text-sm text-slate-300 leading-relaxed">
+          現在記録されているすべての配布履歴（<span id="reset-total-records" class="font-bold text-amber-400">0</span> 件）を消去します。<br>
+          <span class="text-rose-400 text-xs font-semibold">※消去したデータは元に戻せません。</span>
+        </p>
+        <div class="flex space-x-3 pt-2">
+          <button id="btn-cancel-reset-1" class="tap-btn flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-sm border border-slate-700">
+            キャンセル
+          </button>
+          <button id="btn-proceed-reset-step2" class="tap-btn flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-lg shadow-rose-950">
+            次へ進む (1/2)
+          </button>
+        </div>
+      </div>
+
+      <!-- ステップ2 表示 (最終警告) -->
+      <div id="reset-step-2" class="p-5 space-y-4 hidden">
+        <div class="p-3 rounded-lg bg-rose-950/60 border border-rose-800/80 text-rose-200 text-xs leading-relaxed">
+          <strong>【最終確認】</strong> 本当にすべてのカウントデータを完全にリセットしてよろしいですか？
+        </div>
+        <p class="text-xs text-slate-400 text-center">下のボタンをタップすると即時消去されます</p>
+        <div class="flex space-x-3 pt-1">
+          <button id="btn-cancel-reset-2" class="tap-btn flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-sm border border-slate-700">
+            戻る
+          </button>
+          <button id="btn-confirm-reset-final" class="tap-btn flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-sm shadow-xl shadow-red-950 flex items-center justify-center gap-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>完全に消去する</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- トースト通知 -->
+  <div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-slate-800/95 border border-slate-700 text-slate-100 text-xs font-bold shadow-xl backdrop-blur transition-all duration-200 opacity-0 pointer-events-none translate-y-2 z-50 flex items-center gap-2">
+    <span id="toast-icon">✓</span>
+    <span id="toast-text">メッセージ</span>
+  </div>
+
+  <!-- アプリロジック -->
+  <script>
+    (() => {
+      'use strict';
+
+      // --- 定数 & ストレージキー ---
+      const STORAGE_KEY = 'flyer_count_records_v1';
+      const AGE_GROUPS = ['20代以下', '30-40代', '50代', '60代以上'];
+      const GENDERS = ['男性', '女性'];
+
+      // --- Web Audio API (iOS Safari サスペンド対応) ---
+      let audioCtx = null;
+
+      function initAudio() {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+          }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      }
+
+      /**
+       * 電子クリック音の再生
+       * @param {number} freq 周波数 (規定800Hz)
+       * @param {number} duration 継続秒数 (約0.04s)
+       * @param {string} type 波形タイプ
+       */
+      function playBeep(freq = 800, duration = 0.04, type = 'sine') {
+        try {
+          initAudio();
+          if (!audioCtx) return;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+          // アタック・ディケイ（プチプチ音防止）
+          gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + 0.005);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(audioCtx.currentTime);
+          osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {
+          console.warn('Audio playback error:', e);
+        }
+      }
+
+      // --- データ状態 ---
+      // records: Array<{ id: string, timestamp: string, gender: string, ageGroup: string }>
+      let records = [];
+
+      function loadRecords() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            records = JSON.parse(raw);
+            if (!Array.isArray(records)) records = [];
+          }
+        } catch (e) {
+          console.error('Failed to load localStorage', e);
+          records = [];
+        }
+      }
+
+      function saveRecords() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        } catch (e) {
+          console.error('Failed to save to localStorage', e);
+          showToast('ストレージの保存に失敗しました', '⚠️');
+        }
+      }
+
+      // --- トースト通知 ---
+      let toastTimer = null;
+      function showToast(text, icon = '✓') {
+        const toastEl = document.getElementById('toast');
+        const textEl = document.getElementById('toast-text');
+        const iconEl = document.getElementById('toast-icon');
+        if (!toastEl || !textEl || !iconEl) return;
+
+        textEl.textContent = text;
+        iconEl.textContent = icon;
+        toastEl.classList.remove('opacity-0', 'translate-y-2', 'pointer-events-none');
+        toastEl.classList.add('opacity-100', 'translate-y-0');
+
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toastEl.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
+          toastEl.classList.remove('opacity-100', 'translate-y-0');
+        }, 1800);
+      }
+
+      // --- UI更新 & 集計ロジック ---
+      function getAgeKey(age) {
+        if (age.includes('20')) return '20';
+        if (age.includes('30')) return '30';
+        if (age.includes('50')) return '50';
+        if (age.includes('60')) return '60';
+        return '';
+      }
+
+      function updateUI() {
+        const total = records.length;
+        document.getElementById('total-count').textContent = total;
+
+        // 集計カウンター
+        const counts = {
+          '男性': { '20': 0, '30': 0, '50': 0, '60': 0, total: 0 },
+          '女性': { '20': 0, '30': 0, '50': 0, '60': 0, total: 0 },
+        };
+
+        records.forEach(item => {
+          const g = item.gender;
+          const aKey = getAgeKey(item.ageGroup);
+          if (counts[g] && counts[g][aKey] !== undefined) {
+            counts[g][aKey]++;
+            counts[g].total++;
+          }
+        });
+
+        // テーブル更新
+        ['20', '30', '50', '60'].forEach(key => {
+          const mVal = counts['男性'][key];
+          const fVal = counts['女性'][key];
+          const sumVal = mVal + fVal;
+          const pctVal = total > 0 ? Math.round((sumVal / total) * 100) : 0;
+
+          document.getElementById(`stat-m-${key}`).textContent = mVal;
+          document.getElementById(`stat-f-${key}`).textContent = fVal;
+          document.getElementById(`stat-sum-${key}`).textContent = sumVal;
+          document.getElementById(`stat-pct-${key}`).textContent = `${pctVal}%`;
+
+          // ボタン上のバッジ更新
+          const badgeM = document.getElementById(`badge-m-${key}`);
+          const badgeF = document.getElementById(`badge-f-${key}`);
+          if (badgeM) badgeM.textContent = mVal;
+          if (badgeF) badgeF.textContent = fVal;
+        });
+
+        // 性別小計
+        document.getElementById('stat-m-total').textContent = counts['男性'].total;
+        document.getElementById('stat-f-total').textContent = counts['女性'].total;
+        document.getElementById('stat-grand-total').textContent = total;
+
+        // アンドゥボタン & 直近アクションの更新
+        const undoBtn = document.getElementById('btn-undo');
+        const undoSubtext = document.getElementById('undo-subtext');
+        const lastActionBadge = document.getElementById('last-action-badge');
+
+        if (records.length > 0) {
+          const last = records[records.length - 1];
+          const timeStr = new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          undoBtn.disabled = false;
+          undoSubtext.textContent = `直前: ${last.gender} / ${last.ageGroup} (${timeStr})`;
+          lastActionBadge.textContent = `直前: ${last.gender} ${last.ageGroup}`;
+          lastActionBadge.className = last.gender === '男性'
+            ? 'text-[11px] px-2 py-0.5 rounded-full bg-sky-950/80 text-sky-300 border border-sky-700/60 max-w-[160px] truncate'
+            : 'text-[11px] px-2 py-0.5 rounded-full bg-pink-950/80 text-pink-300 border border-pink-700/60 max-w-[160px] truncate';
+        } else {
+          undoBtn.disabled = true;
+          undoSubtext.textContent = '履歴がありません';
+          lastActionBadge.textContent = '待機中';
+          lastActionBadge.className = 'text-[11px] px-2 py-0.5 rounded-full bg-slate-800/90 text-slate-400 border border-slate-700/60 max-w-[160px] truncate';
+        }
+      }
+
+      // --- カウント追加アクション ---
+      function handleCount(gender, ageGroup, buttonEl) {
+        initAudio();
+        // 規定：周波数800Hzの短い電子クリック音
+        playBeep(800, 0.045, 'sine');
+
+        const now = new Date();
+        const record = {
+          id: `${now.getTime()}-${Math.random().toString(36).substring(2, 7)}`,
+          timestamp: now.toISOString(),
+          gender,
+          ageGroup
+        };
+
+        records.push(record);
+        saveRecords();
+        updateUI();
+
+        // 軽いフラッシュフィードバック
+        if (buttonEl) {
+          buttonEl.classList.add('flash-updated');
+          setTimeout(() => buttonEl.classList.remove('flash-updated'), 350);
+        }
+      }
+
+      // --- アンドゥ（取り消し）アクション ---
+      function handleUndo() {
+        if (records.length === 0) return;
+        initAudio();
+        // 取り消し音：低めの電子音 (440Hz)
+        playBeep(440, 0.07, 'triangle');
+
+        const popped = records.pop();
+        saveRecords();
+        updateUI();
+
+        showToast(`取消: ${popped.gender} / ${popped.ageGroup}`, '↩');
+      }
+
+      // --- CSV出力（BOM付きUTF-8 & navigator.share優先） ---
+      async function handleExportCSV() {
+        initAudio();
+        playBeep(900, 0.05, 'sine');
+
+        if (records.length === 0) {
+          showToast('出力するデータがありません', 'ℹ️');
+          return;
+        }
+
+        // BOM (\uFEFF) 付きUTF-8
+        let csv = '\uFEFFNo,日時,性別,年代\r\n';
+        records.forEach((r, idx) => {
+          const d = new Date(r.timestamp);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          const hh = String(d.getHours()).padStart(2, '0');
+          const min = String(d.getMinutes()).padStart(2, '0');
+          const ss = String(d.getSeconds()).padStart(2, '0');
+          const formattedDate = `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+
+          csv += `${idx + 1},"${formattedDate}","${r.gender}","${r.ageGroup}"\r\n`;
+        });
+
+        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const filename = `flyer_counts_${dateStr}.csv`;
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+        // iOS Safari共有シート (navigator.share) の優先実行
+        try {
+          const file = new File([blob], filename, { type: 'text/csv' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'チラシ配布カウント集計',
+              text: `総配布枚数: ${records.length}件`
+            });
+            showToast('CSVを共有しました', '✓');
+            return;
+          }
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            // ユーザーによる共有キャンセル
+            return;
+          }
+          console.warn('navigator.share failed, fallback to download:', err);
+        }
+
+        // 非対応環境または失敗時のフォールバック: Blobダウンロード
+        try {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast('CSVをダウンロードしました', '📥');
+        } catch (e) {
+          console.error('Download failed', e);
+          showToast('CSV出力に失敗しました', '❌');
+        }
+      }
+
+      // --- 2段階確認リセットモーダル管理 ---
+      const modal = document.getElementById('reset-modal');
+      const step1 = document.getElementById('reset-step-1');
+      const step2 = document.getElementById('reset-step-2');
+      const resetCountEl = document.getElementById('reset-total-records');
+
+      function openResetModal() {
+        initAudio();
+        playBeep(600, 0.05, 'sine');
+        resetCountEl.textContent = records.length;
+        step1.classList.remove('hidden');
+        step2.classList.add('hidden');
+        modal.classList.remove('hidden');
+      }
+
+      function closeResetModal() {
+        modal.classList.add('hidden');
+      }
+
+      function goToStep2() {
+        initAudio();
+        playBeep(700, 0.04, 'triangle');
+        step1.classList.add('hidden');
+        step2.classList.remove('hidden');
+      }
+
+      function executeReset() {
+        initAudio();
+        // 警告低音
+        playBeep(300, 0.12, 'sawtooth');
+        records = [];
+        saveRecords();
+        updateUI();
+        closeResetModal();
+        showToast('全データをリセットしました', '🗑️');
+      }
+
+      // --- イベントリスナーの登録 ---
+      function setupEvents() {
+        // 8つのマトリクスボタン
+        const countButtons = document.querySelectorAll('[data-gender][data-age]');
+        countButtons.forEach(btn => {
+          // pointerdown/click対応 (iPhone Safariで快適・即座に発火)
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const gender = btn.getAttribute('data-gender');
+            const age = btn.getAttribute('data-age');
+            handleCount(gender, age, btn);
+          });
+        });
+
+        // アンドゥボタン
+        const undoBtn = document.getElementById('btn-undo');
+        undoBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          handleUndo();
+        });
+
+        // CSVボタン
+        const csvBtn = document.getElementById('btn-export-csv');
+        csvBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          handleExportCSV();
+        });
+
+        // リセットボタン（モーダル制御）
+        const openResetBtn = document.getElementById('btn-open-reset');
+        openResetBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          openResetModal();
+        });
+
+        document.getElementById('btn-cancel-reset-1').addEventListener('click', closeResetModal);
+        document.getElementById('btn-cancel-reset-2').addEventListener('click', () => {
+          step2.classList.add('hidden');
+          step1.classList.remove('hidden');
+        });
+        document.getElementById('btn-proceed-reset-step2').addEventListener('click', goToStep2);
+        document.getElementById('btn-confirm-reset-final').addEventListener('click', executeReset);
+
+        // 背景タップでモーダル閉じ
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeResetModal();
+        });
+
+        // iOS Safariのオーディオリジューム対策（画面初タップ時）
+        document.body.addEventListener('touchstart', () => initAudio(), { once: true });
+        document.body.addEventListener('click', () => initAudio(), { once: true });
+      }
+
+      // --- 初期化 ---
+      loadRecords();
+      setupEvents();
+      updateUI();
+    })();
+  </script>
+</body>
+</html>

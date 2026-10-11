@@ -1,0 +1,10 @@
+{
+  "name": "チラシ配布カウンター",
+  "short_name": "チラシカウント",
+  "description": "片手操作特化型チラシ配布数カウントWebアプリ",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#0f172a",
+  "orientation": "portrait"
+}
