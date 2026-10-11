@@ -143,21 +143,37 @@
         <div class="text-slate-400">比率</div>
       </div>
       <div class="divide-y divide-slate-800/50 text-[11px] font-mono">
-        <!-- 20代以下 -->
+        <!-- 10代 -->
         <div class="grid grid-cols-5 text-center py-0.5 items-center">
-          <div class="text-left pl-1 font-sans text-slate-300 text-[10px] font-medium">20代↓</div>
+          <div class="text-left pl-1 font-sans text-slate-300 text-[10px] font-medium">10代</div>
+          <div id="stat-m-10" class="text-sky-300 font-semibold">0</div>
+          <div id="stat-f-10" class="text-pink-300 font-semibold">0</div>
+          <div id="stat-sum-10" class="text-slate-200 font-bold">0</div>
+          <div id="stat-pct-10" class="text-[9px] text-slate-500">0%</div>
+        </div>
+        <!-- 20代 -->
+        <div class="grid grid-cols-5 text-center py-0.5 items-center">
+          <div class="text-left pl-1 font-sans text-slate-300 text-[10px] font-medium">20代</div>
           <div id="stat-m-20" class="text-sky-300 font-semibold">0</div>
           <div id="stat-f-20" class="text-pink-300 font-semibold">0</div>
           <div id="stat-sum-20" class="text-slate-200 font-bold">0</div>
           <div id="stat-pct-20" class="text-[9px] text-slate-500">0%</div>
         </div>
-        <!-- 30-40代 -->
+        <!-- 30代 -->
         <div class="grid grid-cols-5 text-center py-0.5 items-center">
-          <div class="text-left pl-1 font-sans text-slate-300 text-[10px] font-medium">30-40代</div>
+          <div class="text-left pl-1 font-sans text-slate-300 text-[10px] font-medium">30代</div>
           <div id="stat-m-30" class="text-sky-300 font-semibold">0</div>
           <div id="stat-f-30" class="text-pink-300 font-semibold">0</div>
           <div id="stat-sum-30" class="text-slate-200 font-bold">0</div>
           <div id="stat-pct-30" class="text-[9px] text-slate-500">0%</div>
+        </div>
+        <!-- 40代 -->
+        <div class="grid grid-cols-5 text-center py-0.5 items-center">
+          <div class="text-left pl-1 font-sans text-slate-300 text-[10px] font-medium">40代</div>
+          <div id="stat-m-40" class="text-sky-300 font-semibold">0</div>
+          <div id="stat-f-40" class="text-pink-300 font-semibold">0</div>
+          <div id="stat-sum-40" class="text-slate-200 font-bold">0</div>
+          <div id="stat-pct-40" class="text-[9px] text-slate-500">0%</div>
         </div>
         <!-- 50代 -->
         <div class="grid grid-cols-5 text-center py-0.5 items-center">
@@ -188,127 +204,169 @@
   </section>
 
   <!-- 画面下半分：親指操作特化マトリクスボタンエリア -->
-  <main class="flex-1 flex flex-col justify-end px-2.5 pt-2 pb-2 overflow-hidden">
+  <main class="flex-1 flex flex-col justify-end px-2 pt-1 pb-1.5 overflow-hidden">
     <!-- 横2列（男性・女性）ラベルヘッダー -->
-    <div class="grid grid-cols-2 gap-2 mb-1.5 px-0.5 shrink-0">
-      <div class="flex items-center justify-center py-1 rounded-md bg-sky-950/70 border border-sky-800/60 text-sky-300 font-bold text-xs tracking-wider">
+    <div class="grid grid-cols-2 gap-1.5 mb-1 px-0.5 shrink-0">
+      <div class="flex items-center justify-center py-0.5 rounded-md bg-sky-950/70 border border-sky-800/60 text-sky-300 font-bold text-xs tracking-wider">
         <span class="mr-1">♂</span> 男性
       </div>
-      <div class="flex items-center justify-center py-1 rounded-md bg-pink-950/70 border border-pink-800/60 text-pink-300 font-bold text-xs tracking-wider">
+      <div class="flex items-center justify-center py-0.5 rounded-md bg-pink-950/70 border border-pink-800/60 text-pink-300 font-bold text-xs tracking-wider">
         <span class="mr-1">♀</span> 女性
       </div>
     </div>
 
-    <!-- 2列 × 4行 マトリクスボタン (計8ボタン) -->
+    <!-- 2列 × 6行 マトリクスボタン (計12ボタン) -->
     <!-- 親指の可動域に合わせて下半分いっぱいに配置 -->
-    <div class="grid grid-cols-2 gap-2 flex-1 max-h-[58vh]">
+    <div class="grid grid-cols-2 gap-1.5 flex-1 max-h-[60vh]">
 
-      <!-- 行1: 20代以下 -->
-      <button id="btn-count-m-20" data-gender="男性" data-age="20代以下"
-        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
-        <div class="flex items-center justify-between w-full">
-          <span class="text-xs font-semibold text-sky-400">男性</span>
+      <!-- 行1: 10代 -->
+      <button id="btn-count-m-10" data-gender="男性" data-age="10代"
+        class="tap-btn group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
+        <div class="text-left">
+          <div class="text-base font-black text-white group-active:text-sky-200 tracking-tight leading-none">10代</div>
+          <div class="text-[9px] text-sky-300/70">学生・若年</div>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <span id="badge-m-10" class="px-2 py-0.5 rounded-full bg-sky-950 text-sky-300 font-mono font-bold text-xs border border-sky-700/50">0</span>
+          <span class="text-[9px] text-sky-400/50 font-mono hidden sm:inline">+1</span>
+        </div>
+      </button>
+
+      <button id="btn-count-f-10" data-gender="女性" data-age="10代"
+        class="tap-btn group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
+        <div class="text-left">
+          <div class="text-base font-black text-white group-active:text-pink-200 tracking-tight leading-none">10代</div>
+          <div class="text-[9px] text-pink-300/70">学生・若年</div>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <span id="badge-f-10" class="px-2 py-0.5 rounded-full bg-pink-950 text-pink-300 font-mono font-bold text-xs border border-pink-700/50">0</span>
+          <span class="text-[9px] text-pink-400/50 font-mono hidden sm:inline">+1</span>
+        </div>
+      </button>
+
+      <!-- 行2: 20代 -->
+      <button id="btn-count-m-20" data-gender="男性" data-age="20代"
+        class="tap-btn group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
+        <div class="text-left">
+          <div class="text-base font-black text-white group-active:text-sky-200 tracking-tight leading-none">20代</div>
+          <div class="text-[9px] text-sky-300/70">新社会人</div>
+        </div>
+        <div class="flex items-center space-x-1.5">
           <span id="badge-m-20" class="px-2 py-0.5 rounded-full bg-sky-950 text-sky-300 font-mono font-bold text-xs border border-sky-700/50">0</span>
+          <span class="text-[9px] text-sky-400/50 font-mono hidden sm:inline">+1</span>
         </div>
-        <div class="my-auto py-0.5">
-          <div class="text-lg font-black text-white group-active:text-sky-200 tracking-tight leading-tight">20代以下</div>
-          <div class="text-[10px] text-sky-300/80">若年層・学生</div>
-        </div>
-        <div class="text-[9px] text-sky-400/60 text-right font-mono">TAP +1</div>
       </button>
 
-      <button id="btn-count-f-20" data-gender="女性" data-age="20代以下"
-        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
-        <div class="flex items-center justify-between w-full">
-          <span class="text-xs font-semibold text-pink-400">女性</span>
+      <button id="btn-count-f-20" data-gender="女性" data-age="20代"
+        class="tap-btn group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
+        <div class="text-left">
+          <div class="text-base font-black text-white group-active:text-pink-200 tracking-tight leading-none">20代</div>
+          <div class="text-[9px] text-pink-300/70">新社会人</div>
+        </div>
+        <div class="flex items-center space-x-1.5">
           <span id="badge-f-20" class="px-2 py-0.5 rounded-full bg-pink-950 text-pink-300 font-mono font-bold text-xs border border-pink-700/50">0</span>
+          <span class="text-[9px] text-pink-400/50 font-mono hidden sm:inline">+1</span>
         </div>
-        <div class="my-auto py-0.5">
-          <div class="text-lg font-black text-white group-active:text-pink-200 tracking-tight leading-tight">20代以下</div>
-          <div class="text-[10px] text-pink-300/80">若年層・学生</div>
-        </div>
-        <div class="text-[9px] text-pink-400/60 text-right font-mono">TAP +1</div>
       </button>
 
-      <!-- 行2: 30-40代 -->
-      <button id="btn-count-m-30" data-gender="男性" data-age="30-40代"
-        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
-        <div class="flex items-center justify-between w-full">
-          <span class="text-xs font-semibold text-sky-400">男性</span>
+      <!-- 行3: 30代 -->
+      <button id="btn-count-m-30" data-gender="男性" data-age="30代"
+        class="tap-btn group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
+        <div class="text-left">
+          <div class="text-base font-black text-white group-active:text-sky-200 tracking-tight leading-none">30代</div>
+          <div class="text-[9px] text-sky-300/70">働き盛り</div>
+        </div>
+        <div class="flex items-center space-x-1.5">
           <span id="badge-m-30" class="px-2 py-0.5 rounded-full bg-sky-950 text-sky-300 font-mono font-bold text-xs border border-sky-700/50">0</span>
+          <span class="text-[9px] text-sky-400/50 font-mono hidden sm:inline">+1</span>
         </div>
-        <div class="my-auto py-0.5">
-          <div class="text-lg font-black text-white group-active:text-sky-200 tracking-tight leading-tight">30-40代</div>
-          <div class="text-[10px] text-sky-300/80">働き盛り・子育て</div>
-        </div>
-        <div class="text-[9px] text-sky-400/60 text-right font-mono">TAP +1</div>
       </button>
 
-      <button id="btn-count-f-30" data-gender="女性" data-age="30-40代"
-        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
-        <div class="flex items-center justify-between w-full">
-          <span class="text-xs font-semibold text-pink-400">女性</span>
+      <button id="btn-count-f-30" data-gender="女性" data-age="30代"
+        class="tap-btn group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
+        <div class="text-left">
+          <div class="text-base font-black text-white group-active:text-pink-200 tracking-tight leading-none">30代</div>
+          <div class="text-[9px] text-pink-300/70">働き盛り</div>
+        </div>
+        <div class="flex items-center space-x-1.5">
           <span id="badge-f-30" class="px-2 py-0.5 rounded-full bg-pink-950 text-pink-300 font-mono font-bold text-xs border border-pink-700/50">0</span>
+          <span class="text-[9px] text-pink-400/50 font-mono hidden sm:inline">+1</span>
         </div>
-        <div class="my-auto py-0.5">
-          <div class="text-lg font-black text-white group-active:text-pink-200 tracking-tight leading-tight">30-40代</div>
-          <div class="text-[10px] text-pink-300/80">働き盛り・子育て</div>
-        </div>
-        <div class="text-[9px] text-pink-400/60 text-right font-mono">TAP +1</div>
       </button>
 
-      <!-- 行3: 50代 -->
+      <!-- 行4: 40代 -->
+      <button id="btn-count-m-40" data-gender="男性" data-age="40代"
+        class="tap-btn group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
+        <div class="text-left">
+          <div class="text-base font-black text-white group-active:text-sky-200 tracking-tight leading-none">40代</div>
+          <div class="text-[9px] text-sky-300/70">ファミリー層</div>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <span id="badge-m-40" class="px-2 py-0.5 rounded-full bg-sky-950 text-sky-300 font-mono font-bold text-xs border border-sky-700/50">0</span>
+          <span class="text-[9px] text-sky-400/50 font-mono hidden sm:inline">+1</span>
+        </div>
+      </button>
+
+      <button id="btn-count-f-40" data-gender="女性" data-age="40代"
+        class="tap-btn group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
+        <div class="text-left">
+          <div class="text-base font-black text-white group-active:text-pink-200 tracking-tight leading-none">40代</div>
+          <div class="text-[9px] text-pink-300/70">ファミリー層</div>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <span id="badge-f-40" class="px-2 py-0.5 rounded-full bg-pink-950 text-pink-300 font-mono font-bold text-xs border border-pink-700/50">0</span>
+          <span class="text-[9px] text-pink-400/50 font-mono hidden sm:inline">+1</span>
+        </div>
+      </button>
+
+      <!-- 行5: 50代 -->
       <button id="btn-count-m-50" data-gender="男性" data-age="50代"
-        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
-        <div class="flex items-center justify-between w-full">
-          <span class="text-xs font-semibold text-sky-400">男性</span>
+        class="tap-btn group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
+        <div class="text-left">
+          <div class="text-base font-black text-white group-active:text-sky-200 tracking-tight leading-none">50代</div>
+          <div class="text-[9px] text-sky-300/70">ミドル層</div>
+        </div>
+        <div class="flex items-center space-x-1.5">
           <span id="badge-m-50" class="px-2 py-0.5 rounded-full bg-sky-950 text-sky-300 font-mono font-bold text-xs border border-sky-700/50">0</span>
+          <span class="text-[9px] text-sky-400/50 font-mono hidden sm:inline">+1</span>
         </div>
-        <div class="my-auto py-0.5">
-          <div class="text-lg font-black text-white group-active:text-sky-200 tracking-tight leading-tight">50代</div>
-          <div class="text-[10px] text-sky-300/80">ミドルシニア</div>
-        </div>
-        <div class="text-[9px] text-sky-400/60 text-right font-mono">TAP +1</div>
       </button>
 
       <button id="btn-count-f-50" data-gender="女性" data-age="50代"
-        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
-        <div class="flex items-center justify-between w-full">
-          <span class="text-xs font-semibold text-pink-400">女性</span>
+        class="tap-btn group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
+        <div class="text-left">
+          <div class="text-base font-black text-white group-active:text-pink-200 tracking-tight leading-none">50代</div>
+          <div class="text-[9px] text-pink-300/70">ミドル層</div>
+        </div>
+        <div class="flex items-center space-x-1.5">
           <span id="badge-f-50" class="px-2 py-0.5 rounded-full bg-pink-950 text-pink-300 font-mono font-bold text-xs border border-pink-700/50">0</span>
+          <span class="text-[9px] text-pink-400/50 font-mono hidden sm:inline">+1</span>
         </div>
-        <div class="my-auto py-0.5">
-          <div class="text-lg font-black text-white group-active:text-pink-200 tracking-tight leading-tight">50代</div>
-          <div class="text-[10px] text-pink-300/80">ミドルシニア</div>
-        </div>
-        <div class="text-[9px] text-pink-400/60 text-right font-mono">TAP +1</div>
       </button>
 
-      <!-- 行4: 60代以上 -->
+      <!-- 行6: 60代以上 -->
       <button id="btn-count-m-60" data-gender="男性" data-age="60代以上"
-        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
-        <div class="flex items-center justify-between w-full">
-          <span class="text-xs font-semibold text-sky-400">男性</span>
+        class="tap-btn group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-900/70 to-slate-900 border-2 border-sky-600/60 active:border-sky-400 shadow-md shadow-sky-950/40 cursor-pointer">
+        <div class="text-left">
+          <div class="text-base font-black text-white group-active:text-sky-200 tracking-tight leading-none">60代以上</div>
+          <div class="text-[9px] text-sky-300/70">シニア層</div>
+        </div>
+        <div class="flex items-center space-x-1.5">
           <span id="badge-m-60" class="px-2 py-0.5 rounded-full bg-sky-950 text-sky-300 font-mono font-bold text-xs border border-sky-700/50">0</span>
+          <span class="text-[9px] text-sky-400/50 font-mono hidden sm:inline">+1</span>
         </div>
-        <div class="my-auto py-0.5">
-          <div class="text-lg font-black text-white group-active:text-sky-200 tracking-tight leading-tight">60代以上</div>
-          <div class="text-[10px] text-sky-300/80">シニア層</div>
-        </div>
-        <div class="text-[9px] text-sky-400/60 text-right font-mono">TAP +1</div>
       </button>
 
       <button id="btn-count-f-60" data-gender="女性" data-age="60代以上"
-        class="tap-btn group flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
-        <div class="flex items-center justify-between w-full">
-          <span class="text-xs font-semibold text-pink-400">女性</span>
+        class="tap-btn group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-900/70 to-slate-900 border-2 border-pink-600/60 active:border-pink-400 shadow-md shadow-pink-950/40 cursor-pointer">
+        <div class="text-left">
+          <div class="text-base font-black text-white group-active:text-pink-200 tracking-tight leading-none">60代以上</div>
+          <div class="text-[9px] text-pink-300/70">シニア層</div>
+        </div>
+        <div class="flex items-center space-x-1.5">
           <span id="badge-f-60" class="px-2 py-0.5 rounded-full bg-pink-950 text-pink-300 font-mono font-bold text-xs border border-pink-700/50">0</span>
+          <span class="text-[9px] text-pink-400/50 font-mono hidden sm:inline">+1</span>
         </div>
-        <div class="my-auto py-0.5">
-          <div class="text-lg font-black text-white group-active:text-pink-200 tracking-tight leading-tight">60代以上</div>
-          <div class="text-[10px] text-pink-300/80">シニア層</div>
-        </div>
-        <div class="text-[9px] text-pink-400/60 text-right font-mono">TAP +1</div>
       </button>
 
     </div>
@@ -400,7 +458,7 @@
 
       // --- 定数 & ストレージキー ---
       const STORAGE_KEY = 'flyer_count_records_v1';
-      const AGE_GROUPS = ['20代以下', '30-40代', '50代', '60代以上'];
+      const AGE_GROUPS = ['10代', '20代', '30代', '40代', '50代', '60代以上'];
       const GENDERS = ['男性', '女性'];
 
       // --- Web Audio API (iOS Safari サスペンド対応) ---
@@ -497,8 +555,11 @@
 
       // --- UI更新 & 集計ロジック ---
       function getAgeKey(age) {
+        if (!age) return '';
+        if (age.includes('10')) return '10';
         if (age.includes('20')) return '20';
         if (age.includes('30')) return '30';
+        if (age.includes('40')) return '40';
         if (age.includes('50')) return '50';
         if (age.includes('60')) return '60';
         return '';
@@ -510,8 +571,8 @@
 
         // 集計カウンター
         const counts = {
-          '男性': { '20': 0, '30': 0, '50': 0, '60': 0, total: 0 },
-          '女性': { '20': 0, '30': 0, '50': 0, '60': 0, total: 0 },
+          '男性': { '10': 0, '20': 0, '30': 0, '40': 0, '50': 0, '60': 0, total: 0 },
+          '女性': { '10': 0, '20': 0, '30': 0, '40': 0, '50': 0, '60': 0, total: 0 },
         };
 
         records.forEach(item => {
@@ -524,16 +585,21 @@
         });
 
         // テーブル更新
-        ['20', '30', '50', '60'].forEach(key => {
+        ['10', '20', '30', '40', '50', '60'].forEach(key => {
           const mVal = counts['男性'][key];
           const fVal = counts['女性'][key];
           const sumVal = mVal + fVal;
           const pctVal = total > 0 ? Math.round((sumVal / total) * 100) : 0;
 
-          document.getElementById(`stat-m-${key}`).textContent = mVal;
-          document.getElementById(`stat-f-${key}`).textContent = fVal;
-          document.getElementById(`stat-sum-${key}`).textContent = sumVal;
-          document.getElementById(`stat-pct-${key}`).textContent = `${pctVal}%`;
+          const statM = document.getElementById(`stat-m-${key}`);
+          const statF = document.getElementById(`stat-f-${key}`);
+          const statSum = document.getElementById(`stat-sum-${key}`);
+          const statPct = document.getElementById(`stat-pct-${key}`);
+
+          if (statM) statM.textContent = mVal;
+          if (statF) statF.textContent = fVal;
+          if (statSum) statSum.textContent = sumVal;
+          if (statPct) statPct.textContent = `${pctVal}%`;
 
           // ボタン上のバッジ更新
           const badgeM = document.getElementById(`badge-m-${key}`);
