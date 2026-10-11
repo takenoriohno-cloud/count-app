@@ -64,7 +64,8 @@ count-app/
 ├── README.md                   # プロジェクト説明書
 └── docs/                       # ドキュメント
     ├── REQUIREMENTS.md         # 要件定義書
-    └── TEST_SPECIFICATION.md   # テスト仕様書
+    ├── TEST_SPECIFICATION.md   # テスト仕様書
+    └── TEST_REPORT.md          # テスト実行結果報告書
 ```
 
 ---
