@@ -758,15 +758,11 @@
         el.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       }
 
-      function triggerAutoSync() {
-        console.log('[AutoSync] 15-minute timer triggered');
-        // Step 4 でGAS非同期送信処理を完全結合
-        showToast('定期自動送信タイマー実行', '📡');
-      }
-
       // --- データ状態 ---
-      // records: Array<{ id: string, timestamp: string, gender: string, ageGroup: string }>
+      const CANCEL_QUEUE_KEY = 'flyer_cancel_queue_v1';
       let records = [];
+      let cancelQueue = []; // 送信済みでUNDOされたrecordIdの配列
+      let isSyncing = false;
 
       function loadRecords() {
         try {
@@ -774,10 +770,21 @@
           if (raw) {
             records = JSON.parse(raw);
             if (!Array.isArray(records)) records = [];
+            // マイグレーション
+            records.forEach(r => {
+              if (r.sent === undefined) r.sent = false;
+              if (r.status === undefined) r.status = '有効';
+            });
+          }
+          const rawCancel = localStorage.getItem(CANCEL_QUEUE_KEY);
+          if (rawCancel) {
+            cancelQueue = JSON.parse(rawCancel);
+            if (!Array.isArray(cancelQueue)) cancelQueue = [];
           }
         } catch (e) {
           console.error('Failed to load localStorage', e);
           records = [];
+          cancelQueue = [];
         }
       }
 
@@ -788,6 +795,106 @@
           console.error('Failed to save to localStorage', e);
           showToast('ストレージの保存に失敗しました', '⚠️');
         }
+      }
+
+      function saveCancelQueue() {
+        try {
+          localStorage.setItem(CANCEL_QUEUE_KEY, JSON.stringify(cancelQueue));
+        } catch (e) {
+          console.error('Failed to save cancelQueue', e);
+        }
+      }
+
+      // --- GAS非同期同期処理 ---
+      async function syncWithGAS(isAuto = false) {
+        if (isSyncing) return;
+
+        const unsentLogs = records.filter(r => !r.sent);
+        const pendingCancelIds = [...cancelQueue];
+        const totalPending = unsentLogs.length + pendingCancelIds.length;
+
+        if (totalPending === 0) {
+          if (!isAuto) showToast('未送信のデータはありません', 'ℹ️');
+          return;
+        }
+
+        if (!gasUrl || !gasUrl.trim()) {
+          if (!isAuto) {
+            showToast('GASのWebアプリURLが未設定です', '⚠️');
+            openUsernameModal();
+          }
+          return;
+        }
+
+        isSyncing = true;
+        const spinner = document.getElementById('sync-spinner');
+        const syncBtn = document.getElementById('btn-manual-sync');
+        if (spinner) spinner.classList.add('animate-spin', 'text-sky-400');
+        if (syncBtn) syncBtn.classList.add('opacity-70', 'pointer-events-none');
+
+        try {
+          const payload = {
+            apiToken: gasToken || DEFAULT_API_TOKEN,
+            deviceId: deviceId,
+            userName: userName || '未設定',
+            logs: unsentLogs.map(r => ({
+              recordId: r.id,
+              timestamp: r.timestamp,
+              gender: r.gender,
+              ageGroup: r.ageGroup,
+              status: r.status || '有効'
+            })),
+            cancelIds: pendingCancelIds
+          };
+
+          // CORSプリフライト回避のため text/plain でJSON送信
+          const response = await fetch(gasUrl, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'text/plain' }
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const result = await response.json();
+          if (result.status === 'success') {
+            // 送信成功時のみ未送信フラグを解除（非機能要件）
+            const sentIds = new Set(unsentLogs.map(l => l.id));
+            records.forEach(r => {
+              if (sentIds.has(r.id)) {
+                r.sent = true;
+              }
+            });
+
+            // 取消キューをクリア
+            const canceledSet = new Set(pendingCancelIds);
+            cancelQueue = cancelQueue.filter(id => !canceledSet.has(id));
+
+            saveRecords();
+            saveCancelQueue();
+            updateUI();
+
+            playBeep(1000, 0.08, 'sine');
+            showToast(`送信完了: ${result.inserted}件追加 / ${result.canceled}件取消`, '☁️');
+          } else {
+            throw new Error(result.message || 'APIエラー');
+          }
+        } catch (err) {
+          console.error('GAS sync error:', err);
+          playBeep(250, 0.15, 'sawtooth');
+          showToast(`送信失敗: ${err.message || '通信エラー'} (端末に保持中)`, '⚠️');
+        } finally {
+          isSyncing = false;
+          if (spinner) spinner.classList.remove('animate-spin', 'text-sky-400');
+          if (syncBtn) syncBtn.classList.remove('opacity-70', 'pointer-events-none');
+        }
+      }
+
+      function triggerAutoSync() {
+        console.log('[AutoSync] 15-minute timer triggered');
+        syncWithGAS(true);
       }
 
       // --- トースト通知 ---
@@ -807,7 +914,7 @@
         toastTimer = setTimeout(() => {
           toastEl.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
           toastEl.classList.remove('opacity-100', 'translate-y-0');
-        }, 1800);
+        }, 2200);
       }
 
       // --- UI更新 & 集計ロジック ---
@@ -820,6 +927,19 @@
         if (age.includes('50')) return '50';
         if (age.includes('60')) return '60';
         return '';
+      }
+
+      function updateUnsentBadge() {
+        const unsentCount = records.filter(r => !r.sent).length + cancelQueue.length;
+        const badgeEl = document.getElementById('unsent-badge');
+        if (!badgeEl) return;
+
+        badgeEl.textContent = unsentCount;
+        if (unsentCount > 0) {
+          badgeEl.className = 'px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] font-mono shadow-sm';
+        } else {
+          badgeEl.className = 'px-1.5 py-0.2 rounded-full bg-slate-700 text-slate-400 text-[10px] font-mono';
+        }
       }
 
       function updateUI() {
@@ -870,6 +990,9 @@
         document.getElementById('stat-f-total').textContent = counts['女性'].total;
         document.getElementById('stat-grand-total').textContent = total;
 
+        // 未送信バッジ更新
+        updateUnsentBadge();
+
         // アンドゥボタン & 直近アクションの更新
         const undoBtn = document.getElementById('btn-undo');
         const undoSubtext = document.getElementById('undo-subtext');
@@ -879,7 +1002,7 @@
           const last = records[records.length - 1];
           const timeStr = new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
           undoBtn.disabled = false;
-          undoSubtext.textContent = `直前: ${last.gender} / ${last.ageGroup} (${timeStr})`;
+          undoSubtext.textContent = `直前: ${last.gender} / ${last.ageGroup} (${timeStr})${last.sent ? ' [送信済]' : ' [未送信]'}`;
           lastActionBadge.textContent = `直前: ${last.gender} ${last.ageGroup}`;
           lastActionBadge.className = last.gender === '男性'
             ? 'text-[11px] px-2 py-0.5 rounded-full bg-sky-950/80 text-sky-300 border border-sky-700/60 max-w-[160px] truncate'
@@ -903,7 +1026,9 @@
           id: `${now.getTime()}-${Math.random().toString(36).substring(2, 7)}`,
           timestamp: now.toISOString(),
           gender,
-          ageGroup
+          ageGroup,
+          sent: false,
+          status: '有効'
         };
 
         records.push(record);
@@ -925,10 +1050,19 @@
         playBeep(440, 0.07, 'triangle');
 
         const popped = records.pop();
+
+        if (popped.sent) {
+          // すでにGAS送信済みだった場合は取消キューに追加
+          cancelQueue.push(popped.id);
+          saveCancelQueue();
+          showToast(`取消: ${popped.gender} / ${popped.ageGroup} (スプレッドシート反映待ち)`, '↩');
+        } else {
+          // 未送信だった場合は端末内のみでキャンセル完了
+          showToast(`取消: ${popped.gender} / ${popped.ageGroup}`, '↩');
+        }
+
         saveRecords();
         updateUI();
-
-        showToast(`取消: ${popped.gender} / ${popped.ageGroup}`, '↩');
       }
 
       // --- CSV出力（BOM付きUTF-8 & navigator.share優先） ---
@@ -942,7 +1076,7 @@
         }
 
         // BOM (\uFEFF) 付きUTF-8
-        let csv = '\uFEFFNo,日時,性別,年代\r\n';
+        let csv = '\uFEFFNo,日時,性別,年代,ステータス,送信状況\r\n';
         records.forEach((r, idx) => {
           const d = new Date(r.timestamp);
           const yyyy = d.getFullYear();
@@ -952,8 +1086,10 @@
           const min = String(d.getMinutes()).padStart(2, '0');
           const ss = String(d.getSeconds()).padStart(2, '0');
           const formattedDate = `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+          const sentLabel = r.sent ? '送信済' : '未送信';
+          const statusLabel = r.status || '有効';
 
-          csv += `${idx + 1},"${formattedDate}","${r.gender}","${r.ageGroup}"\r\n`;
+          csv += `${idx + 1},"${formattedDate}","${r.gender}","${r.ageGroup}","${statusLabel}","${sentLabel}"\r\n`;
         });
 
         const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -1068,7 +1204,9 @@
         // 警告低音
         playBeep(300, 0.12, 'sawtooth');
         records = [];
+        cancelQueue = [];
         saveRecords();
+        saveCancelQueue();
         updateUI();
         closeResetModal();
         showToast('全データをリセットしました', '🗑️');
@@ -1091,9 +1229,29 @@
         // 配布開始 / 終了ボタン
         const toggleWorkBtn = document.getElementById('btn-toggle-work');
         if (toggleWorkBtn) {
-          toggleWorkBtn.addEventListener('click', (e) => {
+          toggleWorkBtn.addEventListener('click', async (e) => {
             e.preventDefault();
+            const wasWorking = isWorking;
             toggleWorkState();
+
+            // 配布終了時に未送信データがあれば送信を確認
+            if (wasWorking && !isWorking) {
+              const unsentCount = records.filter(r => !r.sent).length + cancelQueue.length;
+              if (unsentCount > 0 && gasUrl) {
+                if (confirm(`配布を終了しました。\n未送信データが ${unsentCount} 件あります。今すぐスプレッドシートに送信しますか？`)) {
+                  await syncWithGAS(false);
+                }
+              }
+            }
+          });
+        }
+
+        // 手動送信ボタン
+        const manualSyncBtn = document.getElementById('btn-manual-sync');
+        if (manualSyncBtn) {
+          manualSyncBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            syncWithGAS(false);
           });
         }
 
