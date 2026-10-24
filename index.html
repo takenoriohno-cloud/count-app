@@ -475,6 +475,15 @@
               <label class="block text-[11px] text-slate-400 mb-0.5">APIトークン</label>
               <input type="text" id="input-gas-token" value="counter_secret_token_2026" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:border-sky-500 focus:outline-none">
             </div>
+            <div class="pt-1">
+              <button type="button" id="btn-copy-share-url" class="tap-btn w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>スタッフ配布用URLをコピー</span>
+              </button>
+              <p class="text-[9px] text-slate-500 mt-1">※スタッフがこのURLを開くと接続情報が自動設定されます。</p>
+            </div>
           </div>
         </details>
 
@@ -640,6 +649,36 @@
           // GAS連携設定
           gasUrl = localStorage.getItem(GAS_URL_KEY) || '';
           gasToken = localStorage.getItem(GAS_TOKEN_KEY) || DEFAULT_API_TOKEN;
+
+          // URLパラメータ (対策2: ?gas=...&token=...) からの自動注入
+          try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramGas = urlParams.get('gas');
+            const paramToken = urlParams.get('token');
+            let hasParamConfig = false;
+
+            if (paramGas && paramGas.trim()) {
+              gasUrl = paramGas.trim();
+              localStorage.setItem(GAS_URL_KEY, gasUrl);
+              hasParamConfig = true;
+            }
+            if (paramToken && paramToken.trim()) {
+              gasToken = paramToken.trim();
+              localStorage.setItem(GAS_TOKEN_KEY, gasToken);
+              hasParamConfig = true;
+            }
+
+            if (hasParamConfig) {
+              // アドレスバーからパラメータを安全に消去（ブックマークや履歴に残らないようサニタイズ）
+              const cleanUrl = window.location.origin + window.location.pathname;
+              window.history.replaceState({}, document.title, cleanUrl);
+              setTimeout(() => {
+                showToast('スプレッドシート接続情報を自動設定しました', '🔗');
+              }, 400);
+            }
+          } catch (paramErr) {
+            console.warn('URL params parsing skipped:', paramErr);
+          }
 
           // 配布状態の復元
           isWorking = localStorage.getItem(WORKING_STATE_KEY) === 'true';
@@ -1265,6 +1304,33 @@
         usernameModal.addEventListener('click', (e) => {
           if (e.target === usernameModal) closeUsernameModal();
         });
+
+        // スタッフ配布用URLの生成・コピー
+        const copyShareUrlBtn = document.getElementById('btn-copy-share-url');
+        if (copyShareUrlBtn) {
+          copyShareUrlBtn.addEventListener('click', async () => {
+            initAudio();
+            playBeep(750, 0.05, 'sine');
+            const curGas = document.getElementById('input-gas-url')?.value.trim() || gasUrl;
+            const curToken = document.getElementById('input-gas-token')?.value.trim() || gasToken;
+            if (!curGas) {
+              showToast('先にGAS URLを入力してください', '⚠️');
+              return;
+            }
+            const baseUrl = window.location.origin + window.location.pathname;
+            const shareUrl = `${baseUrl}?gas=${encodeURIComponent(curGas)}&token=${encodeURIComponent(curToken)}`;
+            try {
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(shareUrl);
+                showToast('スタッフ配布用URLをコピーしました', '📋');
+              } else {
+                prompt('以下のURLをコピーしてスタッフに共有してください:', shareUrl);
+              }
+            } catch (copyErr) {
+              prompt('以下のURLをコピーしてスタッフに共有してください:', shareUrl);
+            }
+          });
+        }
 
         // アンドゥボタン
         const undoBtn = document.getElementById('btn-undo');
