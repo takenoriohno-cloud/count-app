@@ -91,28 +91,60 @@
 </head>
 <body class="flex flex-col h-full bg-slate-950 text-slate-100 select-none">
 
-  <!-- ヘッダーエリア (タイトル & サブアクション) -->
-  <header class="flex items-center justify-between px-3 py-2 bg-slate-900/90 border-b border-slate-800 shrink-0 backdrop-blur z-10">
-    <div class="flex items-center space-x-2">
-      <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
-      <h1 class="text-sm font-bold tracking-wider text-slate-200">チラシ配布カウンター</h1>
+  <!-- ヘッダーエリア (タイトル & 操作バー) -->
+  <header class="flex flex-col bg-slate-900/95 border-b border-slate-800 shrink-0 backdrop-blur z-10 shadow-sm">
+    <!-- 上段: タイトル & ユーザー名 & サブアクション -->
+    <div class="flex items-center justify-between px-3 py-1.5 border-b border-slate-800/60">
+      <div class="flex items-center space-x-2">
+        <div id="status-pulse-dot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></div>
+        <h1 class="text-xs font-bold tracking-wider text-slate-200">チラシ配布カウンター</h1>
+        <span id="work-status-text" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">停止中</span>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <!-- ユーザー名設定ボタン -->
+        <button id="btn-open-username" class="tap-btn px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium flex items-center gap-1 border border-slate-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <span id="header-username-display" class="max-w-[70px] truncate">名前未設定</span>
+        </button>
+
+        <!-- CSV出力ボタン -->
+        <button id="btn-export-csv" class="tap-btn px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-emerald-50 text-xs font-bold flex items-center gap-1 shadow-sm active:bg-emerald-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span class="hidden sm:inline">CSV</span>
+        </button>
+
+        <!-- リセットボタン (2段階確認) -->
+        <button id="btn-open-reset" class="tap-btn px-2 py-1 rounded-lg bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-800 text-xs font-semibold flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+      </div>
     </div>
-    <div class="flex items-center space-x-2">
-      <!-- CSV出力ボタン -->
-      <button id="btn-export-csv" class="tap-btn px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-emerald-50 text-xs font-bold flex items-center gap-1 shadow-md shadow-emerald-950/50 active:bg-emerald-700">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-        <span>CSV共有</span>
+
+    <!-- 下段: 配布コントロールバー (開始/終了 & 送信プレビュー) -->
+    <div class="flex items-center justify-between px-3 py-1.5 bg-slate-900/60">
+      <!-- 配布開始 / 終了ボタン -->
+      <button id="btn-toggle-work" class="tap-btn px-3 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-sky-950/50">
+        <span id="work-btn-icon">▶</span>
+        <span id="work-btn-label">配布開始</span>
       </button>
 
-      <!-- リセットボタン (2段階確認) -->
-      <button id="btn-open-reset" class="tap-btn px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-800 text-xs font-semibold flex items-center gap-1">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-        <span>リセット</span>
-      </button>
+      <!-- 送信ステータス & タイマー表示 -->
+      <div class="flex items-center space-x-2 text-xs">
+        <span id="auto-timer-status" class="text-[11px] text-slate-400 hidden">次回自動送信: <span id="timer-countdown" class="font-mono text-slate-300">15:00</span></span>
+        <button id="btn-manual-sync" class="tap-btn px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5">
+          <svg id="sync-spinner" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>送信</span>
+          <span id="unsent-badge" class="px-1.5 py-0.2 rounded-full bg-slate-700 text-slate-300 text-[10px] font-mono">0</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -391,6 +423,71 @@
     </div>
   </main>
 
+  <!-- ユーザー名・同期設定モーダル -->
+  <div id="username-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
+      <!-- モーダルヘッダー -->
+      <div class="p-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-slate-100">配布スタッフ・同期設定</h2>
+            <p class="text-[10px] text-slate-400">端末IDと集計用スプレッドシート設定</p>
+          </div>
+        </div>
+        <button id="btn-close-username-modal" class="text-slate-400 hover:text-slate-200 p-1">✕</button>
+      </div>
+
+      <!-- フォーム本体 -->
+      <div class="p-4 space-y-3.5">
+        <!-- ユーザー名入力 -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">配布者ネーム（自由記述）</label>
+          <input type="text" id="input-username" placeholder="例: 佐藤、スタッフA" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
+          <p class="text-[10px] text-slate-400 mt-1">スプレッドシートの集計に表示される名前です。</p>
+        </div>
+
+        <!-- 端末ID表示 -->
+        <div class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800">
+          <div class="flex justify-between items-center text-[10px] text-slate-400 mb-0.5">
+            <span>端末固有ID (自動採番)</span>
+            <span class="text-emerald-400 font-medium">識別可能</span>
+          </div>
+          <div id="display-device-id" class="font-mono text-xs text-slate-300 select-all break-all">dev-loading</div>
+        </div>
+
+        <!-- スプレッドシート連携（GAS）設定アコーディオン -->
+        <details class="text-xs group">
+          <summary class="cursor-pointer text-slate-400 hover:text-slate-300 font-semibold flex items-center justify-between py-1">
+            <span>📡 スプレッドシート(GAS)接続設定</span>
+            <span class="text-[10px] text-slate-500 group-open:rotate-90 transition-transform">▶</span>
+          </summary>
+          <div class="space-y-2 pt-2 border-t border-slate-800 mt-1">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-0.5">GAS Web App URL</label>
+              <input type="url" id="input-gas-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:border-sky-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-0.5">APIトークン</label>
+              <input type="text" id="input-gas-token" value="counter_secret_token_2026" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:border-sky-500 focus:outline-none">
+            </div>
+          </div>
+        </details>
+
+        <!-- ボタン -->
+        <div class="pt-2">
+          <button id="btn-save-username" class="tap-btn w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm shadow-lg shadow-sky-950/60 active:bg-sky-700">
+            設定を保存
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 2段階確認リセットモーダル -->
   <div id="reset-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
@@ -458,8 +555,25 @@
 
       // --- 定数 & ストレージキー ---
       const STORAGE_KEY = 'flyer_count_records_v1';
+      const DEVICE_ID_KEY = 'flyer_device_id_v1';
+      const USER_NAME_KEY = 'flyer_user_name_v1';
+      const WORKING_STATE_KEY = 'flyer_working_state_v1';
+      const GAS_URL_KEY = 'flyer_gas_url_v1';
+      const GAS_TOKEN_KEY = 'flyer_gas_token_v1';
+      const DEFAULT_API_TOKEN = 'counter_secret_token_2026';
+      const AUTO_SYNC_INTERVAL_SEC = 15 * 60; // 15分 (900秒)
+
       const AGE_GROUPS = ['10代', '20代', '30代', '40代', '50代', '60代以上'];
       const GENDERS = ['男性', '女性'];
+
+      // --- 端末ID & ユーザー設定 & 配布状態 ---
+      let deviceId = '';
+      let userName = '';
+      let gasUrl = '';
+      let gasToken = DEFAULT_API_TOKEN;
+      let isWorking = false;
+      let countdownSec = AUTO_SYNC_INTERVAL_SEC;
+      let countdownTimerId = null;
 
       // --- Web Audio API (iOS Safari サスペンド対応) ---
       let audioCtx = null;
@@ -505,6 +619,149 @@
         } catch (e) {
           console.warn('Audio playback error:', e);
         }
+      }
+
+      // --- 端末ID・設定初期化 ---
+      function initDeviceAndSettings() {
+        try {
+          // 端末ID (初回のみ自動生成)
+          let storedDeviceId = localStorage.getItem(DEVICE_ID_KEY);
+          if (!storedDeviceId) {
+            const rand = Math.random().toString(36).substring(2, 8);
+            const ts = Date.now().toString(36);
+            storedDeviceId = `dev-${ts}-${rand}`;
+            localStorage.setItem(DEVICE_ID_KEY, storedDeviceId);
+          }
+          deviceId = storedDeviceId;
+
+          // ユーザー名
+          userName = localStorage.getItem(USER_NAME_KEY) || '';
+          
+          // GAS連携設定
+          gasUrl = localStorage.getItem(GAS_URL_KEY) || '';
+          gasToken = localStorage.getItem(GAS_TOKEN_KEY) || DEFAULT_API_TOKEN;
+
+          // 配布状態の復元
+          isWorking = localStorage.getItem(WORKING_STATE_KEY) === 'true';
+
+          // モーダル入力欄に反映
+          const deviceDisplay = document.getElementById('display-device-id');
+          if (deviceDisplay) deviceDisplay.textContent = deviceId;
+          const inputUser = document.getElementById('input-username');
+          if (inputUser) inputUser.value = userName;
+          const inputGasUrl = document.getElementById('input-gas-url');
+          if (inputGasUrl) inputGasUrl.value = gasUrl;
+          const inputGasToken = document.getElementById('input-gas-token');
+          if (inputGasToken) inputGasToken.value = gasToken;
+
+          updateHeaderSettingsUI();
+          applyWorkStateUI(false);
+
+          if (isWorking) {
+            startAutoSyncTimer();
+          }
+        } catch (e) {
+          console.error('Settings init error:', e);
+        }
+      }
+
+      function updateHeaderSettingsUI() {
+        const headerName = document.getElementById('header-username-display');
+        if (headerName) {
+          headerName.textContent = userName.trim() ? userName : '名前未設定';
+          headerName.className = userName.trim()
+            ? 'max-w-[70px] truncate text-slate-100 font-bold'
+            : 'max-w-[70px] truncate text-slate-400 italic';
+        }
+      }
+
+      // --- 配布開始・終了トグルロジック ---
+      function applyWorkStateUI(playFeedback = true) {
+        const btn = document.getElementById('btn-toggle-work');
+        const icon = document.getElementById('work-btn-icon');
+        const label = document.getElementById('work-btn-label');
+        const pulseDot = document.getElementById('status-pulse-dot');
+        const statusText = document.getElementById('work-status-text');
+
+        if (isWorking) {
+          // 配布中
+          if (btn) btn.className = 'tap-btn px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-rose-950/60 active:bg-rose-700';
+          if (icon) icon.textContent = '■';
+          if (label) label.textContent = '配布終了';
+          if (pulseDot) pulseDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+          if (statusText) {
+            statusText.textContent = '配布中';
+            statusText.className = 'text-[10px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 font-bold border border-emerald-800/60';
+          }
+        } else {
+          // 停止中
+          if (btn) btn.className = 'tap-btn px-3 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-sky-950/50 active:bg-sky-700';
+          if (icon) icon.textContent = '▶';
+          if (label) label.textContent = '配布開始';
+          if (pulseDot) pulseDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
+          if (statusText) {
+            statusText.textContent = '停止中';
+            statusText.className = 'text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono';
+          }
+        }
+      }
+
+      function toggleWorkState() {
+        initAudio();
+        isWorking = !isWorking;
+        localStorage.setItem(WORKING_STATE_KEY, isWorking ? 'true' : 'false');
+        applyWorkStateUI(true);
+
+        if (isWorking) {
+          playBeep(900, 0.06, 'triangle');
+          startAutoSyncTimer();
+          showToast('配布を開始しました (15分自動送信ON)', '🚀');
+        } else {
+          playBeep(400, 0.08, 'sine');
+          stopAutoSyncTimer();
+          showToast('配布を停止しました', '⏹️');
+        }
+      }
+
+      // --- 15分自動同期タイマー制御 ---
+      function startAutoSyncTimer() {
+        stopAutoSyncTimer();
+        countdownSec = AUTO_SYNC_INTERVAL_SEC;
+        const timerContainer = document.getElementById('auto-timer-status');
+        if (timerContainer) timerContainer.classList.remove('hidden');
+        updateCountdownDisplay();
+
+        countdownTimerId = setInterval(() => {
+          countdownSec--;
+          if (countdownSec <= 0) {
+            countdownSec = AUTO_SYNC_INTERVAL_SEC;
+            triggerAutoSync();
+          }
+          updateCountdownDisplay();
+        }, 1000);
+      }
+
+      function stopAutoSyncTimer() {
+        if (countdownTimerId) {
+          clearInterval(countdownTimerId);
+          countdownTimerId = null;
+        }
+        const timerContainer = document.getElementById('auto-timer-status');
+        if (timerContainer) timerContainer.classList.add('hidden');
+      }
+
+      function updateCountdownDisplay() {
+        const el = document.getElementById('timer-countdown');
+        if (!el) return;
+        const m = Math.floor(countdownSec / 60);
+        const s = countdownSec % 60;
+        el.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      }
+
+      function triggerAutoSync() {
+        console.log('[AutoSync] 15-minute timer triggered');
+        // Step 4 でGAS非同期送信処理を完全結合
+        showToast('定期自動送信タイマー実行', '📡');
       }
 
       // --- データ状態 ---
@@ -740,6 +997,46 @@
         }
       }
 
+      // --- ユーザー名・同期設定モーダル管理 ---
+      const usernameModal = document.getElementById('username-modal');
+
+      function openUsernameModal() {
+        initAudio();
+        playBeep(650, 0.04, 'sine');
+        const inputUser = document.getElementById('input-username');
+        if (inputUser) inputUser.value = userName;
+        const inputGasUrl = document.getElementById('input-gas-url');
+        if (inputGasUrl) inputGasUrl.value = gasUrl;
+        const inputGasToken = document.getElementById('input-gas-token');
+        if (inputGasToken) inputGasToken.value = gasToken;
+        usernameModal.classList.remove('hidden');
+        if (inputUser) inputUser.focus();
+      }
+
+      function closeUsernameModal() {
+        usernameModal.classList.add('hidden');
+      }
+
+      function saveUsernameSettings() {
+        initAudio();
+        playBeep(850, 0.05, 'triangle');
+        const inputUser = document.getElementById('input-username');
+        const inputGasUrl = document.getElementById('input-gas-url');
+        const inputGasToken = document.getElementById('input-gas-token');
+
+        userName = inputUser ? inputUser.value.trim() : '';
+        gasUrl = inputGasUrl ? inputGasUrl.value.trim() : '';
+        gasToken = inputGasToken ? inputGasToken.value.trim() : DEFAULT_API_TOKEN;
+
+        localStorage.setItem(USER_NAME_KEY, userName);
+        localStorage.setItem(GAS_URL_KEY, gasUrl);
+        localStorage.setItem(GAS_TOKEN_KEY, gasToken);
+
+        updateHeaderSettingsUI();
+        closeUsernameModal();
+        showToast('設定を保存しました', '💾');
+      }
+
       // --- 2段階確認リセットモーダル管理 ---
       const modal = document.getElementById('reset-modal');
       const step1 = document.getElementById('reset-step-1');
@@ -779,7 +1076,7 @@
 
       // --- イベントリスナーの登録 ---
       function setupEvents() {
-        // 8つのマトリクスボタン
+        // 12個のマトリクスボタン
         const countButtons = document.querySelectorAll('[data-gender][data-age]');
         countButtons.forEach(btn => {
           // pointerdown/click対応 (iPhone Safariで快適・即座に発火)
@@ -789,6 +1086,26 @@
             const age = btn.getAttribute('data-age');
             handleCount(gender, age, btn);
           });
+        });
+
+        // 配布開始 / 終了ボタン
+        const toggleWorkBtn = document.getElementById('btn-toggle-work');
+        if (toggleWorkBtn) {
+          toggleWorkBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleWorkState();
+          });
+        }
+
+        // ユーザー名設定モーダル関連
+        const openUserBtn = document.getElementById('btn-open-username');
+        if (openUserBtn) openUserBtn.addEventListener('click', openUsernameModal);
+        const closeUserBtn = document.getElementById('btn-close-username-modal');
+        if (closeUserBtn) closeUserBtn.addEventListener('click', closeUsernameModal);
+        const saveUserBtn = document.getElementById('btn-save-username');
+        if (saveUserBtn) saveUserBtn.addEventListener('click', saveUsernameSettings);
+        usernameModal.addEventListener('click', (e) => {
+          if (e.target === usernameModal) closeUsernameModal();
         });
 
         // アンドゥボタン
@@ -831,6 +1148,7 @@
       }
 
       // --- 初期化 ---
+      initDeviceAndSettings();
       loadRecords();
       setupEvents();
       updateUI();
